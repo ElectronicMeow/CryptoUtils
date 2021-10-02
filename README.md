@@ -8,4 +8,4 @@ Meow!
 
 ## 文档
 
-戳[Documentation](/docs)
+戳这个 [Documentation](/docs)

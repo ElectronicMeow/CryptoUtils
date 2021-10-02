@@ -1,5 +1,8 @@
 //
-// Created by Reverier-Xu on 2021/10/3.
+// Created on 2021/10/3.
+// Algorithm developed in Python by @D33BaT0
+// Exported to C by @XWanan
+// Refactored by @Reverier-Xu
 //
 
 #ifndef MEOW_CRYPTO_UTILS_H
