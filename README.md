@@ -2,6 +2,10 @@
 
 Meow!
 
-## Agreements
+## 约定
 
-you should treat all data as hex string.
+所有的函数都仅处理十六进制字符串。
+
+## 文档
+
+戳[Documentation](/docs)
