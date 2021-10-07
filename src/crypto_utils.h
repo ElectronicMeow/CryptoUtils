@@ -24,6 +24,32 @@ void decrypt(const char *public_N_hex,
              const char *sk_hex,
              const char *W_hex,
              const char *Z_hex,
+
              char **result_hex);
+
+void key_gen(const char* public_N_hex,
+             const char* public_g_hex,
+
+             char ** public_key,
+             char ** secret_key);
+
+void key_gen_main(const char *p_hex,
+                  const char *q_hex,
+
+                  char **sec_p,
+                  char **sec_q,
+                  char **pub_N,
+                  char **pub_k,
+                  char **pub_g);
+
+void unique_decrypt(const char *public_N_hex,
+                    const char *public_k_hex,
+                    const char *public_g_hex,
+                    const char* pk_hex,
+                    const char *secret_p_hex,
+                    const char *secret_q_hex,
+                    const char *A_hex,
+                    const char *B_hex,
+                    char ** result_m);
 
 #endif //MEOW_CRYPTO_UTILS_H
