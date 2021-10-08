@@ -48,24 +48,24 @@
  * A，B 自动申请的空间大小为 strlen(str) + 1，如有需要请自行释放。
  * @param public_N_hex  公共参数N，应当是一个十六进制字符串。
  * @param public_g_hex  公共参数g，应当是一个十六进制字符串。
- * @param pk_hex  公钥，应当是一个十六进制字符串。
- * @param m_hex  需要加密的明文，应当是一个十六进制字符串。
- * @param res_A_hex  加密结果密文对 (A, B) 中的 A。
- * @param res_B_hex  加密结果密文对 (A, B) 中的 B。
+ * @param public_key_hex  公钥，应当是一个十六进制字符串。
+ * @param plaintext_hex  需要加密的明文，应当是一个十六进制字符串。
+ * @param res_encrypted_pair_a  加密结果密文对 (A, B) 中的 A。
+ * @param res_encrypted_pair_b  加密结果密文对 (A, B) 中的 B。
  * @return 有个锤子返回值。
  */
 void encrypt(const char *public_N_hex,
              const char *public_g_hex,
-             const char *pk_hex,
-             const char *m_hex,
-             char **res_A_hex,
-             char **res_B_hex) {
+             const char *public_key_hex,
+             const char *plaintext_hex,
+             char **res_encrypted_pair_a,
+             char **res_encrypted_pair_b) {
     INIT_RANDOM_GENERATOR();
     mpz_t N, g, N2, r, A, B, pk, m;
     mpz_init_set_str(N, public_N_hex, 16);
     mpz_init_set_str(g, public_g_hex, 16);
-    mpz_init_set_str(pk, pk_hex, 16);
-    mpz_init_set_str(m, m_hex, 16);
+    mpz_init_set_str(pk, public_key_hex, 16);
+    mpz_init_set_str(m, plaintext_hex, 16);
     mpz_init(N2);
     mpz_init(r);
     mpz_init(A);
@@ -90,34 +90,35 @@ void encrypt(const char *public_N_hex,
     mpz_clear(m);
     mpz_clear(r_tmp);
 
-    *res_A_hex = mpz_get_str(NULL, 16, A);
-    *res_B_hex = mpz_get_str(NULL, 16, B);
+    *res_encrypted_pair_a = mpz_get_str(NULL, 16, A);
+    *res_encrypted_pair_b = mpz_get_str(NULL, 16, B);
 
     mpz_clear(A);
     mpz_clear(B);
 }
 
 /**
- * 根据公共参数N与私钥sk将密文对 (W, Z) 解密，结果通过字符串返回给 result_hex。
+ * client 根据公共参数N与私钥sk将密文对 (W, Z) 解密，结果通过字符串返回给 result_hex。
  * -*- 内存管理提示 -*- ：本函数不会对传入的字符串进行释放操作，
  * 返回值 result_hex 会自动申请字符串空间，无需提前申请。
  * result_hex 自动申请的空间大小为 strlen(str) + 1，如有需要请自行释放。
  * @param public_N_hex  公共参数N，应当是一个十六进制字符串。
- * @param sk_hex  私钥，应当是一个十六进制字符串。
- * @param W_hex  密文对中的 W，应当是一个十六进制字符串。
- * @param Z_hex  密文对中的  Z，应当是一个十六进制字符串。
+ * @param secret_key_hex  私钥，应当是一个十六进制字符串。
+ * @param encrypted_pair_a_hex  密文对中的 W，应当是一个十六进制字符串。
+ * @param encrypted_pair_b_hex  密文对中的  Z，应当是一个十六进制字符串。
+ * @param res_plaintext 解密后的结果。
  * @return 有个锤子返回值。
  */
 void decrypt(const char *public_N_hex,
-             const char *sk_hex,
-             const char *W_hex,
-             const char *Z_hex,
-             char **result_hex) {
+             const char *secret_key_hex,
+             const char *encrypted_pair_a_hex,
+             const char *encrypted_pair_b_hex,
+             char **res_plaintext) {
     mpz_t N, N2, up, sk_tmp, sk, W, Z;
     mpz_init_set_str(N, public_N_hex, 16);
-    mpz_init_set_str(sk, sk_hex, 16);
-    mpz_init_set_str(W, W_hex, 16);
-    mpz_init_set_str(Z, Z_hex, 16);
+    mpz_init_set_str(sk, secret_key_hex, 16);
+    mpz_init_set_str(W, encrypted_pair_a_hex, 16);
+    mpz_init_set_str(Z, encrypted_pair_b_hex, 16);
     mpz_init(N2);
     mpz_init(up);
     mpz_init(sk_tmp);
@@ -129,7 +130,7 @@ void decrypt(const char *public_N_hex,
     mpz_mod(up, Z, N2);
     mpz_fdiv_q(up, up, N);
 
-    *result_hex = mpz_get_str(NULL, 16, up);
+    *res_plaintext = mpz_get_str(NULL, 16, up);
 
     mpz_clear(N);
     mpz_clear(N2);
@@ -175,28 +176,23 @@ void key_gen(const char *public_N_hex,
 
 /**
  * 生成 master key 所使用的函数。当 p，q 传入空指针时，将使用代码中默认的 p，q （不安全！！）
- * @param p_hex master key 参数 p。
- * @param q_hex master key 参数 q。
- * @param sec_p 生成的私钥参数 p。
- * @param sec_q 生成的私钥参数 q。
- * @param pub_N 生成的公钥参数 N。
- * @param pub_k 生成的公钥参数 k。
- * @param pub_g 生成的公钥参数 g。
+ * @param public_N_hex 生成的公钥参数 N。
+ * @param public_k_hex 生成的公钥参数 k。
+ * @param public_g_hex 生成的公钥参数 g。
+ * @param prime_p_hex master key 参数 p。
+ * @param prime_q_hex master key 参数 q。
+ * @param secret_key_pair_p 生成的私钥参数 p。
+ * @param secret_key_pair_q 生成的私钥参数 q。
  * @return 有个锤子返回值。
  */
-void key_gen_main(const char *p_hex,
-                  const char *q_hex,
-                  char **sec_p,
-                  char **sec_q,
-                  char **pub_N,
-                  char **pub_k,
-                  char **pub_g) {
+void key_gen_main(char **public_N_hex, char **public_k_hex, char **public_g_hex, const char *prime_p_hex,
+                  const char *prime_q_hex, char **secret_key_pair_p, char **secret_key_pair_q) {
 
     mpz_t p, p_tmp;
     mpz_init(p);
     mpz_init(p_tmp);
-    if (p_hex)
-        mpz_set_str(p, p_hex, 16);
+    if (prime_p_hex)
+        mpz_set_str(p, prime_p_hex, 16);
     else
         mpz_set_str(p, DEFAULT_MASTER_P_, 16);
 
@@ -206,8 +202,8 @@ void key_gen_main(const char *p_hex,
     mpz_t q, q_tmp;
     mpz_init(q);
     mpz_init(q_tmp);
-    if (q_hex)
-        mpz_set_str(q, q_hex, 16);
+    if (prime_q_hex)
+        mpz_set_str(q, prime_q_hex, 16);
     else
         mpz_set_str(q, DEFAULT_MASTER_Q_, 16);
 
@@ -262,12 +258,12 @@ void key_gen_main(const char *p_hex,
     mpz_fdiv_q(k, r_tmp, N);
 
     // Returns here.
-    *sec_p = mpz_get_str(NULL, 16, p_tmp);
-    *sec_q = mpz_get_str(NULL, 16, q_tmp);
+    *secret_key_pair_p = mpz_get_str(NULL, 16, p_tmp);
+    *secret_key_pair_q = mpz_get_str(NULL, 16, q_tmp);
 
-    *pub_N = mpz_get_str(NULL, 16, N);
-    *pub_k = mpz_get_str(NULL, 16, k);
-    *pub_g = mpz_get_str(NULL, 16, g);
+    *public_N_hex = mpz_get_str(NULL, 16, N);
+    *public_k_hex = mpz_get_str(NULL, 16, k);
+    *public_g_hex = mpz_get_str(NULL, 16, g);
 
     mpz_clear(N);
     mpz_clear(k);
@@ -284,33 +280,33 @@ void key_gen_main(const char *p_hex,
  * @param public_N_hex master key 生成时使用的公共参数 N，十六进制字符串。
  * @param public_k_hex master key 生成时使用的公共参数 k，十六进制字符串。
  * @param public_g_hex master key 生成时使用的公共参数 g，十六进制字符串。
- * @param pk_hex 加密此信息使用的公钥，十六进制字符串。
- * @param secret_p_hex master key 中的 p，十六进制字符串。
- * @param secret_q_hex master key 中的 q，十六进制字符串。
- * @param A_hex 密文对中的 A，十六进制字符串。
- * @param B_hex 密文对中的 B，十六进制字符串。
- * @param result_m 解密后的明文结果，以十六进制字符串的格式返回。
+ * @param public_key_hex 加密此信息使用的公钥，十六进制字符串。
+ * @param secret_key_pair_p_hex master key 中的 p，十六进制字符串。
+ * @param secret_key_pair_q_hex master key 中的 q，十六进制字符串。
+ * @param encrypted_pair_a_hex 密文对中的 A，十六进制字符串。
+ * @param encrypted_pair_b_hex 密文对中的 B，十六进制字符串。
+ * @param res_plaintext 解密后的明文结果，以十六进制字符串的格式返回。
  * @return 有个锤子返回值。
  */
 void unique_decrypt(const char *public_N_hex,
                     const char *public_k_hex,
                     const char *public_g_hex,
-                    const char* pk_hex,
-                    const char *secret_p_hex,
-                    const char *secret_q_hex,
-                    const char *A_hex,
-                    const char *B_hex,
-                    char ** result_m) {
+                    const char *public_key_hex,
+                    const char *secret_key_pair_p_hex,
+                    const char *secret_key_pair_q_hex,
+                    const char *encrypted_pair_a_hex,
+                    const char *encrypted_pair_b_hex,
+                    char **res_plaintext) {
     // 初始化参数
     mpz_t p_sec, q_sec, N, k, g, h, N2, k_1;
 
     mpz_t pk, A, B;
-    mpz_init_set_str(pk, pk_hex, 16);
-    mpz_init_set_str(A, A_hex, 16);
-    mpz_init_set_str(B, B_hex, 16);
+    mpz_init_set_str(pk, public_key_hex, 16);
+    mpz_init_set_str(A, encrypted_pair_a_hex, 16);
+    mpz_init_set_str(B, encrypted_pair_b_hex, 16);
 
-    mpz_init_set_str(p_sec, secret_p_hex, 16);
-    mpz_init_set_str(q_sec, secret_q_hex, 16);
+    mpz_init_set_str(p_sec, secret_key_pair_p_hex, 16);
+    mpz_init_set_str(q_sec, secret_key_pair_q_hex, 16);
 
     mpz_init_set_str(N, public_N_hex, 16);
     mpz_init_set_str(k, public_k_hex, 16);
@@ -371,7 +367,7 @@ void unique_decrypt(const char *public_N_hex,
     mpz_mod(m, r_tmp, N2);
 
 //    gmp_printf("message= %Zd\n\n", m);
-    *result_m = mpz_get_str(NULL, 16, m);
+    *res_plaintext = mpz_get_str(NULL, 16, m);
 
     mpz_clear(p_sec);
     mpz_clear(q_sec);
@@ -401,7 +397,7 @@ void unique_decrypt(const char *public_N_hex,
  * @param prod_pk 返回值，返回处理之后的统一公钥。
  * @return 有个锤子返回值。
  */
-void get_master_pk(const char*public_N_hex, const char * pks[], int pks_length, char ** prod_pk) {
+void get_master_pk(const char *public_N_hex, const char *pks[], int pks_length, char **prod_pk) {
     mpz_t N, N2, prod_pk_mpz;
     mpz_init_set_str(N, public_N_hex, 16);
     mpz_init(N2);
@@ -427,41 +423,42 @@ void get_master_pk(const char*public_N_hex, const char * pks[], int pks_length, 
  * @param public_N_hex 公共参数中的 N，十六进制字符串。
  * @param public_k_hex 公共参数中的 k，十六进制字符串。
  * @param public_g_hex 公共参数中的 g，十六进制字符串。
- * @param secret_p_hex master key 中的 p，十六进制字符串。
- * @param secret_q_hex master key 中的 q，十六进制字符串。
- * @param client_pk client 提供的公钥。
- * @param master_pk master 通过计算所有 client 公钥得出的统一公钥。
- * @param C client 提供的已加密信息对中的 C，十六进制字符串。
- * @param D client 提供的已加密信息对中的 D，十六进制字符串。
- * @param W 转换后的结果密文对中的 W。
- * @param Z 转换后的结果密文对中的 Z。
+ * @param secret_key_pair_p_hex master key 中的 p，十六进制字符串。
+ * @param secret_key_pair_q_hex master key 中的 q，十六进制字符串。
+ * @param client_public_key_hex client 提供的公钥。
+ * @param master_public_key_hex master 通过计算所有 client 公钥得出的统一公钥。
+ * @param client_encrypted_pair_a_hex client 提供的已加密信息对中的 C，十六进制字符串。
+ * @param client_encrypted_pair_b_hex client 提供的已加密信息对中的 D，十六进制字符串。
+ * @param master_encrypted_pair_a_hex 转换后的结果密文对中的 W。
+ * @param master_encrypted_pair_b_hex 转换后的结果密文对中的 Z。
  */
 void transform_to_master_pk(const char *public_N_hex,
                             const char *public_k_hex,
                             const char *public_g_hex,
-                            const char *secret_p_hex,
-                            const char *secret_q_hex,
-                            const char *client_pk,
-                            const char *master_pk,
-                            const char *C,
-                            const char *D,
-                            char ** W,
-                            char ** Z) {
-    char * z_hex;
+                            const char *secret_key_pair_p_hex,
+                            const char *secret_key_pair_q_hex,
+                            const char *client_public_key_hex,
+                            const char *master_public_key_hex,
+                            const char *client_encrypted_pair_a_hex,
+                            const char *client_encrypted_pair_b_hex,
+                            char **master_encrypted_pair_a_hex,
+                            char **master_encrypted_pair_b_hex) {
+    char *z_hex;
     unique_decrypt(public_N_hex,
                    public_k_hex,
                    public_g_hex,
-                   client_pk,
-                   secret_p_hex,
-                   secret_q_hex,
-                   C, D,
+                   client_public_key_hex,
+                   secret_key_pair_p_hex,
+                   secret_key_pair_q_hex,
+                   client_encrypted_pair_a_hex,
+                   client_encrypted_pair_b_hex,
                    &z_hex);
     encrypt(public_N_hex,
             public_g_hex,
-            master_pk,
+            master_public_key_hex,
             z_hex,
-            W,
-            Z);
+            master_encrypted_pair_a_hex,
+            master_encrypted_pair_b_hex);
 }
 
 /**
@@ -469,39 +466,39 @@ void transform_to_master_pk(const char *public_N_hex,
  * @param public_N_hex 公共参数中的 N，十六进制字符串。
  * @param public_k_hex 公共参数中的 k，十六进制字符串。
  * @param public_g_hex 公共参数中的 g，十六进制字符串。
- * @param secret_p_hex master key 中的 p，十六进制字符串。
- * @param secret_q_hex master key 中的 q，十六进制字符串。
- * @param master_pk master 通过计算所有 client 公钥得出的统一公钥。
- * @param client_pk client 提供的公钥。
- * @param C client 提供的已加密信息对中的 C，十六进制字符串。
- * @param D client 提供的已加密信息对中的 D，十六进制字符串。
- * @param W 转换后的结果密文对中的 W。
- * @param Z 转换后的结果密文对中的 Z。
+ * @param secret_key_pair_p_hex master key 中的 p，十六进制字符串。
+ * @param secret_key_pair_q_hex master key 中的 q，十六进制字符串。
+ * @param master_public_key_hex master 通过计算所有 client 公钥得出的统一公钥。
+ * @param client_public_key_hex client 提供的公钥。
+ * @param master_encrypted_pair_a_hex client 提供的已加密信息对中的 C，十六进制字符串。
+ * @param master_encrypted_pair_b_hex client 提供的已加密信息对中的 D，十六进制字符串。
+ * @param client_encrypted_pair_a_hex 转换后的结果密文对中的 W。
+ * @param client_encrypted_pair_b_hex 转换后的结果密文对中的 Z。
  */
 void transform_to_client_pk(const char *public_N_hex,
                             const char *public_k_hex,
                             const char *public_g_hex,
-                            const char *secret_p_hex,
-                            const char *secret_q_hex,
-                            const char *master_pk,
-                            const char *client_pk,
-                            const char *C,
-                            const char *D,
-                            char ** W,
-                            char ** Z) {
-    char * z_hex;
+                            const char *secret_key_pair_p_hex,
+                            const char *secret_key_pair_q_hex,
+                            const char *master_public_key_hex,
+                            const char *client_public_key_hex,
+                            const char *master_encrypted_pair_a_hex,
+                            const char *master_encrypted_pair_b_hex,
+                            char **client_encrypted_pair_a_hex,
+                            char **client_encrypted_pair_b_hex) {
+    char *z_hex;
     unique_decrypt(public_N_hex,
                    public_k_hex,
                    public_g_hex,
-                   master_pk,
-                   secret_p_hex,
-                   secret_q_hex,
-                   C, D,
+                   master_public_key_hex,
+                   secret_key_pair_p_hex,
+                   secret_key_pair_q_hex,
+                   master_encrypted_pair_a_hex, master_encrypted_pair_b_hex,
                    &z_hex);
     encrypt(public_N_hex,
             public_g_hex,
-            client_pk,
+            client_public_key_hex,
             z_hex,
-            W,
-            Z);
+            client_encrypted_pair_a_hex,
+            client_encrypted_pair_b_hex);
 }
