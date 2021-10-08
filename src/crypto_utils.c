@@ -393,3 +393,115 @@ void unique_decrypt(const char *public_N_hex,
     mpz_clear(pk);
 }
 
+/**
+ * 获取 master 公钥。
+ * @param public_N_hex 公共参数中的 N，十六进制字符串。
+ * @param pks 一个字符串常量数组，包含所有需要转换的公钥。
+ * @param pks_length 整数值，表示公钥数组的长度。
+ * @param prod_pk 返回值，返回处理之后的统一公钥。
+ * @return 有个锤子返回值。
+ */
+void get_master_pk(const char*public_N_hex, const char * pks[], int pks_length, char ** prod_pk) {
+    mpz_t N, N2, prod_pk_mpz;
+    mpz_init_set_str(N, public_N_hex, 16);
+    mpz_init(N2);
+    mpz_mul(N2, N, N);
+    mpz_init(prod_pk_mpz);
+    mpz_add_ui(prod_pk_mpz, prod_pk_mpz, 1);
+    mpz_t temp_pk;
+    mpz_init(temp_pk);
+    for (int i = 0; i < pks_length; ++i) {
+        mpz_set_str(temp_pk, pks[i], 16);
+        mpz_mul(prod_pk_mpz, prod_pk_mpz, temp_pk);
+        mpz_mod(prod_pk_mpz, prod_pk_mpz, N2);
+    }
+    mpz_clear(N);
+    mpz_clear(N2);
+    mpz_clear(temp_pk);
+    *prod_pk = mpz_get_str(NULL, 16, prod_pk_mpz);
+    mpz_clear(prod_pk_mpz);
+}
+
+/**
+ * 将 client 加密过后的信息转换为 master key 统一加密的信息，为之后的同态计算提供基础。
+ * @param public_N_hex 公共参数中的 N，十六进制字符串。
+ * @param public_k_hex 公共参数中的 k，十六进制字符串。
+ * @param public_g_hex 公共参数中的 g，十六进制字符串。
+ * @param secret_p_hex master key 中的 p，十六进制字符串。
+ * @param secret_q_hex master key 中的 q，十六进制字符串。
+ * @param client_pk client 提供的公钥。
+ * @param master_pk master 通过计算所有 client 公钥得出的统一公钥。
+ * @param C client 提供的已加密信息对中的 C，十六进制字符串。
+ * @param D client 提供的已加密信息对中的 D，十六进制字符串。
+ * @param W 转换后的结果密文对中的 W。
+ * @param Z 转换后的结果密文对中的 Z。
+ */
+void transform_to_master_pk(const char *public_N_hex,
+                            const char *public_k_hex,
+                            const char *public_g_hex,
+                            const char *secret_p_hex,
+                            const char *secret_q_hex,
+                            const char *client_pk,
+                            const char *master_pk,
+                            const char *C,
+                            const char *D,
+                            char ** W,
+                            char ** Z) {
+    char * z_hex;
+    unique_decrypt(public_N_hex,
+                   public_k_hex,
+                   public_g_hex,
+                   client_pk,
+                   secret_p_hex,
+                   secret_q_hex,
+                   C, D,
+                   &z_hex);
+    encrypt(public_N_hex,
+            public_g_hex,
+            master_pk,
+            z_hex,
+            W,
+            Z);
+}
+
+/**
+ * 将 master key 加密过后的统一信息转换为 client 分别加密的信息，发回 client 之后使其能够解密。
+ * @param public_N_hex 公共参数中的 N，十六进制字符串。
+ * @param public_k_hex 公共参数中的 k，十六进制字符串。
+ * @param public_g_hex 公共参数中的 g，十六进制字符串。
+ * @param secret_p_hex master key 中的 p，十六进制字符串。
+ * @param secret_q_hex master key 中的 q，十六进制字符串。
+ * @param master_pk master 通过计算所有 client 公钥得出的统一公钥。
+ * @param client_pk client 提供的公钥。
+ * @param C client 提供的已加密信息对中的 C，十六进制字符串。
+ * @param D client 提供的已加密信息对中的 D，十六进制字符串。
+ * @param W 转换后的结果密文对中的 W。
+ * @param Z 转换后的结果密文对中的 Z。
+ */
+void transform_to_client_pk(const char *public_N_hex,
+                            const char *public_k_hex,
+                            const char *public_g_hex,
+                            const char *secret_p_hex,
+                            const char *secret_q_hex,
+                            const char *master_pk,
+                            const char *client_pk,
+                            const char *C,
+                            const char *D,
+                            char ** W,
+                            char ** Z) {
+    char * z_hex;
+    unique_decrypt(public_N_hex,
+                   public_k_hex,
+                   public_g_hex,
+                   master_pk,
+                   secret_p_hex,
+                   secret_q_hex,
+                   C, D,
+                   &z_hex);
+    encrypt(public_N_hex,
+            public_g_hex,
+            client_pk,
+            z_hex,
+            W,
+            Z);
+}

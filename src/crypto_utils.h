@@ -52,4 +52,7 @@ void unique_decrypt(const char *public_N_hex,
                     const char *B_hex,
                     char ** result_m);
 
+void get_master_pk(const char*public_N_hex, const char * pks[], int pks_length, char ** prod_pk);
+
+
 #endif //MEOW_CRYPTO_UTILS_H
