@@ -18,13 +18,13 @@ if(MEOW_CRYPTO_UTILS_ENABLE_INSTALL)
 endif()
 
 if(MEOW_CRYPTO_UTILS_STANDALONE_BUILD)
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
         add_compile_options(
                 -Wall
                 -Wextra
                 -pedantic
                 $<$<BOOL:${MEOW_CRYPTO_UTILS_ENABLE_WERROR}>:-Werror>)
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
         add_compile_options(
                 /W4
                 $<$<BOOL:${MEOW_CRYPTO_UTILS_ENABLE_WERROR}>:/WX>)
