@@ -362,8 +362,9 @@ namespace MeowCryptoUtils {
                        masterUniqueDecrypt(param, secretKey, srcCiphertext));
     }
 
-    MasterSecretKeyPair specGen() {
+    void specGen(QString &specP, QString &specQ) {
         int k_bits = 2048;
+
         int p_bit = k_bits / 2;
         int q_bit = k_bits - p_bit;
 
@@ -377,7 +378,7 @@ namespace MeowCryptoUtils {
             mpz_nextprime(p, p);
             mpz_sub_ui(p_tmp, p, 1);
             mpz_fdiv_q_ui(p_tmp, p_tmp, 2);
-            if ( mpz_probab_prime_p(p_tmp, 5) != 0 ) {
+            if (mpz_probab_prime_p(p_tmp, 5) != 0) {
                 break;
             }
         }
@@ -390,20 +391,18 @@ namespace MeowCryptoUtils {
             mpz_nextprime(q, q);
             mpz_sub_ui(q_tmp, q, 1);
             mpz_fdiv_q_ui(q_tmp, q_tmp, 2);
-            if ( mpz_probab_prime_p(q_tmp, 5) != 0 ) {
+            if (mpz_probab_prime_p(q_tmp, 5) != 0) {
                 break;
             }
         }
-        MasterSecretKeyPair res;
-        res.setA(mpz_get_str(nullptr, 16, p));
-        res.setB(mpz_get_str(nullptr, 16, q));
+
+        specP = (mpz_get_str(nullptr, 16, p));
+        specQ = (mpz_get_str(nullptr, 16, q));
 
         mpz_clear(p);
         mpz_clear(q);
         mpz_clear(p_tmp);
         mpz_clear(q_tmp);
-
-        return res;
     }
 
     EncryptedPair EncryptedPair::operator+(const EncryptedPair &another) const {
