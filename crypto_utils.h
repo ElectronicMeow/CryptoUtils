@@ -228,6 +228,8 @@ namespace MeowCryptoUtils {
                                                 const QString &destPublicKey,
                                                 const EncryptedPair &srcCiphertext);
 
+    [[nodiscard]] MasterSecretKeyPair specGen();
+
     /* === COMPUTING CENTER === */
 
     [[nodiscard]] bool ccTransform(const PublicParameters &param,
