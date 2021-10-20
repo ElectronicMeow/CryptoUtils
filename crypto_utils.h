@@ -213,7 +213,7 @@ namespace MeowCryptoUtils {
 
     /* === CLIENT === */
 
-    [[nodiscard]] KeyPair keyGen(const PublicParameters *param);
+    [[nodiscard]] KeyPair keyGen(const PublicParameters &param);
 
     /* === MASTER === */
 

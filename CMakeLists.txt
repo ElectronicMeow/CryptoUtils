@@ -29,3 +29,15 @@ add_library(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
         ${QT_LIBRARIES}
         ${GMP_LIBRARIES})
+
+set_target_properties(${PROJECT_NAME}
+        PROPERTIES
+        AUTOMOC ON
+        AUTORCC ON
+        AUTOUIC ON
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+        ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
