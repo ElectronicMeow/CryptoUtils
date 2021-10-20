@@ -119,11 +119,11 @@ namespace MeowCryptoUtils {
         return res;
     }
 
-    KeyPair keyGen(const PublicParameters *param) {
+    KeyPair keyGen(const PublicParameters &param) {
         INIT_RANDOM_GENERATOR();
         mpz_t N, g, N2, sk, pk;
-        mpz_init_set_str(N, param->N().toStdString().c_str(), 16);
-        mpz_init_set_str(g, param->g().toStdString().c_str(), 16);
+        mpz_init_set_str(N, param.N().toStdString().c_str(), 16);
+        mpz_init_set_str(g, param.g().toStdString().c_str(), 16);
         mpz_init(N2);
         mpz_init(sk);
         mpz_init(pk);
